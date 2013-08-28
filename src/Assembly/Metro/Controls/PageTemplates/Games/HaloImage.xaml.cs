@@ -101,16 +101,15 @@ namespace Assembly.Metro.Controls.PageTemplates.Games
             _header[0] = (byte)image.ReadByte();
             _header[1] = (byte)image.ReadByte();
 
-            while (_header[0] == 0xFF && (_header[1] >= 0xE0 && _header[1] <= 0xEF))
+            while (_header[0] == 0xFF && (_header[1] != 0xE0 || _header[1] != 0xEF))
             {
                 int _length = image.ReadByte();
                 _length = _length << 8;
                 _length |= image.ReadByte();
 
-                for (int i = 0; i < _length - 2; i++)
-                {
-                    image.ReadByte();
-                }
+                // read out that exif block
+                image.ReadBlock(_length - 2);
+
                 _header[0] = (byte)image.ReadByte();
                 _header[1] = (byte)image.ReadByte();
             }
