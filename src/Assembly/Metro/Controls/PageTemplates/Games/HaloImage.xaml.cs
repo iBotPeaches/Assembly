@@ -13,6 +13,8 @@ using Blamite.IO;
 using Blamite.Util;
 using Microsoft.Win32;
 using AvalonDock.Layout;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace Assembly.Metro.Controls.PageTemplates.Games
 {
@@ -97,23 +99,17 @@ namespace Assembly.Metro.Controls.PageTemplates.Games
 
         private EndianStream skipExifData(EndianStream image)
         {
-            byte[] _header = new byte[2];
-            _header[0] = (byte)image.ReadByte();
-            _header[1] = (byte)image.ReadByte();
-
-            while (_header[0] == 0xFF && (_header[1] != 0xE0 || _header[1] != 0xEF))
+            Bitmap bitmap = new Bitmap(image.BaseStream);
+            Stream output = new MemoryStream();
+            // load into bitmap, remove all exlif data
+            foreach (PropertyItem item in bitmap.PropertyItems)
             {
-                int _length = image.ReadByte();
-                _length = _length << 8;
-                _length |= image.ReadByte();
-
-                // read out that exif block
-                image.ReadBlock(_length - 2);
-
-                _header[0] = (byte)image.ReadByte();
-                _header[1] = (byte)image.ReadByte();
+                if (item.Type == 2)
+                    bitmap.RemovePropertyItem(item.Id);
             }
-            return image;
+
+            bitmap.Save(output, ImageFormat.Jpeg);
+            return new EndianStream(output, image.Endianness);
         }
 
         /// <summary>
